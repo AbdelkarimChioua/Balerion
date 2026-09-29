@@ -3,9 +3,9 @@ import pandas as pd
 import json
 import os
 from datetime import datetime
-from analysis import analyze_asset, conservative_signal
+from analysis import analyze_asset, SIGNALS
 
-st.set_page_config(page_title="Kraken Analyst", page_icon="📊", layout="centered")
+st.set_page_config(page_title="Balerion", page_icon="📊", layout="centered")
 
 DATA_FILE = "portfolio.json"
 
@@ -19,7 +19,7 @@ def save_portfolio(p):
     with open(DATA_FILE, "w") as f:
         json.dump(p, f, indent=2)
 
-st.title("📊 Kraken Analyst")
+st.title("📊 Balerion")
 
 tab1, tab2, tab3, tab4 = st.tabs(["Portfolio", "Analyze", "Add Trade", "Backtest"])
 
@@ -77,26 +77,29 @@ with tab1:
 with tab2:
     st.subheader("Analyze an asset")
     pair = st.text_input("Kraken pair (e.g. XBTUSD, ETHUSD, SOLUSD)", "XBTUSD")
+    strategy = st.selectbox(
+        "Strategy",
+        list(SIGNALS.keys()),
+        index=0,
+        help="Which signal rules to apply"
+    )
     if st.button("Analyze"):
         try:
-            a = analyze_asset(pair)
+            a = analyze_asset(pair, strategy=strategy)
             colors = {"BUY": "🟢", "SELL": "🔴", "HOLD": "🟡"}
-            st.markdown(f"### {colors[a['signal']]} {a['signal']} — {pair}")
+            st.markdown(f"### {colors[a['signal']]} {a['signal']} — {pair} ({strategy})")
             c1, c2 = st.columns(2)
-            c1.metric("Price", f"${a['price']:,.2f}")
+            c1.metric("Price", f"${a['price']:,.4f}")
             c2.metric("RSI(14)", f"{a['rsi']:.1f}")
-            c1.metric("MA50", f"${a['ma50']:,.2f}")
-            c2.metric("MA200", f"${a['ma200']:,.2f}")
+            c1.metric("MA50", f"${a['ma50']:,.4f}")
+            c2.metric("MA200", f"${a['ma200']:,.4f}")
             st.metric("Distance from 90d high", f"{a['pct_from_high90']:.1f}%")
 
-            st.subheader("Why this signal?")
             r = a["history"].iloc[-1]
-            reasons = []
-            reasons.append(f"Price {'above' if r['close'] > r['ma200'] else 'below'} MA200")
-            reasons.append(f"MA50 {'above' if r['ma50'] > r['ma200'] else 'below'} MA200")
-            reasons.append(f"RSI = {r['rsi']:.1f} ({'oversold' if r['rsi']<30 else 'overbought' if r['rsi']>70 else 'neutral'})")
-            for reason in reasons:
-                st.write("• " + reason)
+            st.subheader("Context")
+            st.write(f"• Price is **{'above' if r['close'] > r['ma200'] else 'below'}** MA200")
+            st.write(f"• MA50 is **{'above' if r['ma50'] > r['ma200'] else 'below'}** MA200")
+            st.write(f"• RSI = {r['rsi']:.1f} ({'oversold' if r['rsi']<30 else 'overbought' if r['rsi']>70 else 'neutral'})")
 
             st.subheader("Last 90 days")
             chart_df = a["history"].tail(90).set_index("time")[["close", "ma50", "ma200"]]
@@ -133,29 +136,33 @@ with tab3:
 
 # ---------- TAB 4: BACKTEST ----------
 with tab4:
-    st.subheader("BTC Signal Backtest")
-    st.caption("Uses Kraken's full BTC history. Full = 2010+, Modern = 2018+.")
-    if st.button("Run BTC backtest (~30s)"):
-        with st.spinner("Fetching history and simulating..."):
+    st.subheader("Strategy Backtest — BTC")
+    st.caption("Compares all 4 strategies. Full = 2010+. Modern = 2018+ (trust this one more).")
+    if st.button("Run BTC backtest (~30-60s)"):
+        with st.spinner("Fetching history and running 4 strategies..."):
             from backtest import run_backtest
             res, _ = run_backtest()
         if not res:
             st.error("No data returned.")
         else:
             for era in ["full", "modern"]:
-                if era in res:
-                    st.markdown(f"### {era.upper()} history")
+                if era not in res:
+                    continue
+                st.markdown(f"### {era.upper()} history")
+                for strat, horizons in res[era].items():
+                    st.markdown(f"**{strat}**")
                     tbl = []
-                    for h, s in res[era].items():
+                    for h in sorted(horizons.keys()):
+                        s = horizons[h]
                         if s["winrate"] is None:
-                            tbl.append({"Horizon": f"{h}d", "Signals": 0, "Winrate": "—", "Avg return": "—"})
+                            tbl.append({"Horizon": f"{h}d", "Signals": 0, "Winrate": "—", "Avg": "—", "Median": "—"})
                         else:
                             tbl.append({
                                 "Horizon": f"{h}d",
                                 "Signals": s["count"],
                                 "Winrate": f"{s['winrate']}%",
-                                "Avg return": f"{s['avg_ret']}%",
+                                "Avg": f"{s['avg_ret']}%",
                                 "Median": f"{s['median_ret']}%",
                             })
                     st.dataframe(pd.DataFrame(tbl), hide_index=True, use_container_width=True)
-            st.info("⚠️ Winrate ≠ profitability. Check avg return and sample size (need 20+ signals to trust).")
+            st.info("⚠️ Compare strategies: look for 60%+ winrate AND positive avg return AND 20+ signals. Ignore anything else.")
