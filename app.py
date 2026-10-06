@@ -1,4 +1,4 @@
-import streamlit as st
+⁸import streamlit as st
 import pandas as pd
 import json
 import os
@@ -10,28 +10,22 @@ from analysis import analyze_asset, SIGNALS
 
 st.set_page_config(page_title="Balerion", page_icon="◆", layout="centered")
 
-# ---------------- TARGARYEN SIGIL SVG ----------------
-# Three-headed dragon sigil (Targaryen house emblem) - from Wikimedia Commons
 TARGARYEN_SIGIL = """
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
-  <path d="M50 10 C45 10 40 15 38 20 C35 18 32 16 28 17 C24 18 22 22 22 26 C18 24 14 25 12 28 C10 32 12 36 16 38 C14 42 15 46 18 48 C14 52 12 58 15 62 C18 66 24 66 28 63 C30 68 34 72 40 73 C42 80 45 85 50 88 C55 85 58 80 60 73 C66 72 70 68 72 63 C76 66 82 66 85 62 C88 58 86 52 82 48 C85 46 86 42 84 38 C88 36 90 32 88 28 C86 25 82 24 78 26 C78 22 76 18 72 17 C68 16 65 18 62 20 C60 15 55 10 50 10 Z" fill="#c41e1e"/>
-  <path d="M38 45 C35 42 32 42 30 45 C28 48 30 52 33 53 C36 54 38 52 38 49 Z" fill="#c41e1e"/>
-  <path d="M62 45 C65 42 68 42 70 45 C72 48 70 52 67 53 C64 54 62 52 62 49 Z" fill="#c41e1e"/>
-  <circle cx="50" cy="55" r="8" fill="#c41e1e"/>
-</svg>
-"""
-
-TARGARYEN_SIGIL_B64 = base64.b64encode(TARGARYEN_SIGIL.encode()).decode()
-
-# ---------------- BALERION DRAGON HEAD SVG ----------------
-# Stylized dragon head silhouette (Balerion style)
-BALERION_HEAD = """
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80" fill="none">
-  <path d="M10 40 L25 25 L35 30 L45 15 L55 25 L70 20 L80 30 L95 25 L110 40 L95 50 L80 45 L70 55 L55 45 L45 55 L35 50 L25 55 L10 40 Z" fill="#ededf0"/>
-  <path d="M45 15 L42 5 L48 12 Z" fill="#ededf0"/>
-  <path d="M70 20 L75 8 L78 18 Z" fill="#ededf0"/>
-  <circle cx="40" cy="35" r="3" fill="#16161a"/>
-  <circle cx="75" cy="33" r="3" fill="#16161a"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!-- Three-headed dragon sigil (simplified Targaryen style) -->
+  <!-- Center head -->
+  <path d="M100 40 C95 32 88 30 82 34 C78 28 70 26 64 30 C58 34 58 42 62 48 C56 48 52 52 52 58 C52 64 58 68 64 68 L70 72 C72 78 76 82 82 84 L82 92 C78 96 76 102 78 108 L72 112 C68 116 70 122 76 124 L84 122 C86 128 92 132 100 132 C108 132 114 128 116 122 L124 124 C130 122 132 116 128 112 L122 108 C124 102 122 96 118 92 L118 84 C124 82 128 78 130 72 L136 68 C142 68 148 64 148 58 C148 52 144 48 138 48 C142 42 142 34 136 30 C130 26 122 28 118 34 C112 30 105 32 100 40 Z" fill="#ededf0"/>
+  <!-- Left head -->
+  <path d="M55 95 C48 90 40 92 36 98 C32 92 24 92 20 98 C16 104 20 112 28 114 L30 122 C28 128 32 134 40 134 L48 130 C52 136 56 140 62 142 L60 150 C56 156 58 162 66 162 L74 156 C76 152 76 146 74 142 L68 138 C70 132 68 124 62 118 L62 108 C58 106 56 102 55 95 Z" fill="#ededf0"/>
+  <!-- Right head -->
+  <path d="M145 95 C152 90 160 92 164 98 C168 92 176 92 180 98 C184 104 180 112 172 114 L170 122 C172 128 168 134 160 134 L152 130 C148 136 144 140 138 142 L140 150 C144 156 142 162 134 162 L126 156 C124 152 124 146 126 142 L132 138 C130 132 132 124 138 118 L138 108 C142 106 144 102 145 95 Z" fill="#ededf0"/>
+  <!-- Body / tail hint -->
+  <path d="M100 132 C92 138 88 148 90 158 L96 156 C96 148 100 142 104 140 C108 142 112 148 112 156 L118 158 C120 148 116 138 108 132 Z" fill="#ededf0"/>
+  <!-- Eyes (dark negative space) -->
+  <circle cx="82" cy="58" r="3" fill="#16161a"/>
+  <circle cx="118" cy="58" r="3" fill="#16161a"/>
+  <circle cx="36" cy="112" r="2.5" fill="#16161a"/>
+  <circle cx="164" cy="112" r="2.5" fill="#16161a"/>
 </svg>
 """
 
