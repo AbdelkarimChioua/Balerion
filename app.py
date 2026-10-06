@@ -209,7 +209,7 @@ SYMBOL_MAP = {
     "bitcoin-cash": "BCH",
 }
 
-SIGIL_URL = "https://raw.githubusercontent.com/AbdelkarimChioua/Balerion/main/sigil.jpg"
+SIGIL_URL = "https://raw.githubusercontent.com/AbdelkarimChioua/Balerion/main/sigil.jpeg"
 
 @st.cache_data(ttl=120)
 def fetch_top15():
